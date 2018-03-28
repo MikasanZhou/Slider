@@ -7,6 +7,8 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 
 /**
@@ -14,6 +16,8 @@ import android.view.View;
  */
 
 public class SliderView extends View {
+
+    private static final String TAG = "SliderView";
 
     private Context mContext;
 
@@ -28,9 +32,21 @@ public class SliderView extends View {
 
     private int mWidth;
 
-    private int mPaddingLeft = DensityUtils.dp2px(10);
+    private int mPaddingLeft;
 
     private int mSliderWidth;
+
+    private float mLastX;
+
+    private float mCurrentX;
+
+    private int mLeft;
+
+    private int mRight;
+
+    private int mTop;
+
+    private int mBottom;
 
     public SliderView(Context context) {
         this(context, null);
@@ -42,6 +58,8 @@ public class SliderView extends View {
 
     public SliderView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mContext = context;
+        mPaddingLeft = DensityUtils.dp2px(mContext, 10);
         init();
     }
 
@@ -62,8 +80,47 @@ public class SliderView extends View {
 
     private void drawSlider(Canvas canvas) {
         mPaint.setColor(Color.RED);
-        RectF rectF = new RectF(mPaddingLeft, mPaddingLeft, mSliderWidth - mPaddingLeft, mHeight - mPaddingLeft);
-        canvas.drawRoundRect(rectF,50,50,mPaint);
+        mLeft = mPaddingLeft;
+        mRight = mSliderWidth - mPaddingLeft;
+        mTop = mPaddingLeft;
+        mBottom = mHeight - mPaddingLeft;
+        if(mRight+mCurrentX<=mWidth-mPaddingLeft  && mLeft+mCurrentX>=mPaddingLeft){
+            RectF rectF = new RectF(mLeft + mCurrentX, mTop, mRight + mCurrentX, mBottom);
+            canvas.drawRoundRect(rectF, 50, 50, mPaint);
+        }else {
+            RectF rectF = new RectF(mLeft + mCurrentX, mTop, mWidth-mPaddingLeft, mBottom);
+            canvas.drawRoundRect(rectF, 50, 50, mPaint);
+        }
+    }
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        float downX = event.getX();
+        float downY = event.getY();
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                if (downX > mLeft && downX < mRight && downY > mTop && downY < mBottom) {
+                    mLastX = downX;
+                    return true;
+                } else {
+                    return false;
+                }
+            case MotionEvent.ACTION_MOVE:
+                mCurrentX = downX - mLastX;
+                if (mRight + mCurrentX <= mWidth && mLeft+mCurrentX>=mPaddingLeft) {
+                    postInvalidate();
+                }
+                Log.d(TAG, "current X:" + mCurrentX);
+                break;
+            case MotionEvent.ACTION_UP:
+                mCurrentX = 0;
+                postInvalidate();
+                break;
+            default:
+                break;
+        }
+        return true;
     }
 
     private void drawBg(Canvas canvas) {
@@ -78,7 +135,7 @@ public class SliderView extends View {
         int measureWidth = getMeasureSize(widthMeasureSpec);
         int measureHeight = getMeasureSize(heightMeasureSpec);
         mWidth = measureWidth;
-        mSliderWidth = mWidth*3/8;
+        mSliderWidth = mWidth * 3 / 8;
         setMeasuredDimension(measureWidth, measureHeight);
     }
 
