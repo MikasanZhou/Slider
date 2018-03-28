@@ -1,5 +1,6 @@
 package com.example.miaksan.sliderview;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -73,29 +74,40 @@ public class SliderView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
+        //画背景
         drawBg(canvas);
-
+        //画滑块
         drawSlider(canvas);
     }
 
+    /**
+     * 画滑块
+     */
     private void drawSlider(Canvas canvas) {
         mPaint.setColor(Color.RED);
         mLeft = mPaddingLeft;
-        mRight = mSliderWidth - mPaddingLeft;
+        mRight = mSliderWidth + mLeft;
         mTop = mPaddingLeft;
         mBottom = mHeight - mPaddingLeft;
-        if(mRight+mCurrentX<=mWidth-mPaddingLeft  && mLeft+mCurrentX>=mPaddingLeft){
-            RectF rectF = new RectF(mLeft + mCurrentX, mTop, mRight + mCurrentX, mBottom);
+        if (mRight + mCurrentX >= mWidth - mPaddingLeft) {
+            RectF rectF = new RectF(mWidth - mSliderWidth - mPaddingLeft, mTop, mWidth - mPaddingLeft, mBottom);
             canvas.drawRoundRect(rectF, 50, 50, mPaint);
-        }else {
-            RectF rectF = new RectF(mLeft + mCurrentX, mTop, mWidth-mPaddingLeft, mBottom);
+        } else if (mLeft + mCurrentX <= mPaddingLeft) {
+            RectF rectF = new RectF(mLeft, mTop, mRight, mBottom);
+            canvas.drawRoundRect(rectF, 50, 50, mPaint);
+        } else {
+            RectF rectF = new RectF(mLeft + mCurrentX, mTop, mRight + mCurrentX, mBottom);
             canvas.drawRoundRect(rectF, 50, 50, mPaint);
         }
     }
 
-
+    /**
+     * 控制滑动事件
+     */
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
+        //getX 和 getRawX 的区别
         float downX = event.getX();
         float downY = event.getY();
         switch (event.getAction()) {
@@ -108,10 +120,10 @@ public class SliderView extends View {
                 }
             case MotionEvent.ACTION_MOVE:
                 mCurrentX = downX - mLastX;
-                if (mRight + mCurrentX <= mWidth && mLeft+mCurrentX>=mPaddingLeft) {
+                Log.d(TAG, "current X:" + mCurrentX);
+                if (mRight + mCurrentX <= mWidth && mLeft + mCurrentX >= mPaddingLeft) {
                     postInvalidate();
                 }
-                Log.d(TAG, "current X:" + mCurrentX);
                 break;
             case MotionEvent.ACTION_UP:
                 mCurrentX = 0;
@@ -123,6 +135,9 @@ public class SliderView extends View {
         return true;
     }
 
+    /**
+     * 画背景
+     */
     private void drawBg(Canvas canvas) {
         mPaint.setColor(Color.BLUE);
         RectF rectF = new RectF(0, 0, mWidth, mHeight);
